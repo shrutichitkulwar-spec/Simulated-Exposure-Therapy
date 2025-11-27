@@ -1,122 +1,163 @@
 <!DOCTYPE html>
-<html>
+
+<html lang="en">
 <head>
-    <title>Stress Sensor & VR Dashboard</title>
-    <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #081a34;
-            margin: 0;
-            height: 100vh;
-            display: flex;
-        }
+<meta charset="UTF-8">
+<title>Simulated Exposure Therapy — VR Dashboard</title>
 
-        .left-panel, .right-panel {
-            flex: 1;
-            padding: 30px;
-            overflow-y: auto;
-        }
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-        .left-panel {
-            background-color: #25284b;
-            border-right: 1px solid #e5cece;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
+<script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
 
-        .right-panel {
-            background-color: #4268b1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
+<style>
+    body { margin: 0; font-family: Arial, sans-serif; background: #10141b; color: #fff; }
+    header { padding: 15px; background: #01254a; text-align: center; font-size: 24px; font-weight: bold; }
+    #layout { display: flex; height: calc(100vh - 70px); }
+    #vrArea { flex: 1.3; border-right: 2px solid #2a2f38; position: relative; }
+    #dashboard { flex: 1; padding: 20px; background: #1c1f26; overflow-y: auto; }
+    .card { background: #2a2f38; padding: 20px; border-radius: 12px; margin-bottom: 20px; }
+    button { width: 100%; background: #4b9ced; color: white; padding: 12px; border: none; font-size: 18px; border-radius: 6px; cursor: pointer; margin-bottom: 15px; }
+    #logTable { width: 100%; border-collapse: collapse; font-size: 14px; }
+    #logTable th, #logTable td { border: 1px solid #333; padding: 6px 10px; text-align: center; }
+    #logTable th { background: #01254a; }
+</style>
 
-        h1 {
-            color: #0c0a17;
-            margin-bottom: 20px;
-        }
-
-        button {
-            background-color: #1a222b;
-            color: white;
-            border: none;
-            padding: 12px 20px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 16px;
-            margin-bottom: 20px;
-            transition:background 0.3s;
-        }
-
-        button:hover {
-            background-color: #1b2024;
-        }
-
-        .card {
-            background: rgb(132, 136, 158);
-            border-radius: 10px;
-            padding: 20px 30px;
-            margin-bottom: 15px;
-            width: 80%;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            text-align: center;
-        }
-
-        .label {
-            color: #000000;
-            margin-bottom: 8px;
-        }
-
-        .value {
-            font-size: 24px;
-            font-weight: bold;
-            color: #000000;
-        }
-
-        /* VR Scene placeholder */
-        #vrScene {
-            width: 150px;
-            height: 150px;
-            background-color: rgb(207, 141, 141);
-            border-radius: 50%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin-bottom: 20px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-            font-weight: bold;
-            font-size: 20px;
-            color: #333;
-        }
-    </style>
 </head>
 <body>
-    <div class="left-panel">
-        <h1>Stress Sensor</h1>
-        <button id="connectBtn">CONNECT TO BACKEND</button>
 
-        <div class="card">
-            <div class="label">Heart Rate</div>
-            <div class="value" id="heartRate">--</div>
-        </div>
+<header>Simulated Exposure Therapy — VR + Real-Time Dashboard</header>
 
-        <div class="card">
-            <div class="label">Stress Level</div>
-            <div class="value" id="stressLevel">--</div>
-        </div>
+<div id="layout">
+
+```
+<!-- VR SCENE -->
+<div id="vrArea">
+    <a-scene embedded vr-mode-ui="enabled: false">
+        <a-entity position="0 1.6 3"><a-camera></a-camera></a-entity>
+        <a-plane rotation="-90 0 0" width="20" height="20" color="#4a4a4a"></a-plane>
+        <a-sphere id="exposureSphere" position="0 1.5 -3" radius="1" color="#00aaff"></a-sphere>
+        <a-entity light="type: ambient; intensity: 0.7"></a-entity>
+        <a-entity light="type: directional; intensity: 0.8" position="2 4 2"></a-entity>
+    </a-scene>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashboard">
+    <button id="connectBtn">CONNECT TO BACKEND</button>
+
+    <div class="card">
+        <h3>Stress Level Chart</h3>
+        <canvas id="stressChart"></canvas>
     </div>
 
-    <div class="right-panel">
-        <h1>VR Scene / Therapist View</h1>
-        <div id="vrScene">0%</div>
-
-        <div class="card">
-            <div class="label">VR Intensity</div>
-            <div class="value" id="vrIntensity">--</div>
-        </div>
+    <div class="card">
+        <h3>VR Intensity Chart</h3>
+        <canvas id="intensityChart"></canvas>
     </div>
 
-    <script src="frontend.js"></script>
+    <div class="card">
+        <h3>Sensor Data Log</h3>
+        <table id="logTable">
+            <thead>
+                <tr>
+                    <th>Timestamp</th>
+                    <th>Heart Rate</th>
+                    <th>GSR</th>
+                    <th>Stress Level</th>
+                    <th>VR Intensity</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+</div>
+```
+
+</div>
+
+<script>
+let sensorSocket = null;
+let vrSocket = null;
+let stressData = [], intensityData = [], labels = [];
+
+const stressChart = new Chart(document.getElementById("stressChart"), {
+    type: "line",
+    data: { labels, datasets: [{ label: "Stress Level", data: stressData, borderColor: "#0a84ff", borderWidth: 3, tension: 0.4 }] },
+    options: { scales: { y: { min: 0, max: 1 } } }
+});
+
+const intensityChart = new Chart(document.getElementById("intensityChart"), {
+    type: "line",
+    data: { labels, datasets: [{ label: "VR Intensity", data: intensityData, borderColor: "#ff6b00", borderWidth: 3, tension: 0.4 }] },
+    options: { scales: { y: { min: 0, max: 1 } } }
+});
+
+function logSensorData(hr, gsr, stress, intensity) {
+    const tbody = document.querySelector("#logTable tbody");
+    const row = document.createElement("tr");
+    const timestamp = new Date().toLocaleTimeString();
+    row.innerHTML = `<td>${timestamp}</td><td>${hr}</td><td>${gsr}</td><td>${stress.toFixed(2)}</td><td>${intensity.toFixed(2)}</td>`;
+    tbody.prepend(row);
+    if(tbody.rows.length > 20) tbody.deleteRow(20);
+}
+
+function updateVRScene(intensity) {
+    const sphere = document.getElementById("exposureSphere");
+    const red = Math.floor(100 + intensity * 155);
+    const blue = Math.floor(255 - intensity * 155);
+    sphere.setAttribute("color", `rgb(${red}, 50, ${blue})`);
+    sphere.setAttribute("radius", 1 + intensity * 1.5);
+}
+
+function connectSockets() {
+    if(sensorSocket && vrSocket) return;
+
+    sensorSocket = new WebSocket("ws://127.0.0.1:8001/ws/sensor");
+    vrSocket = new WebSocket("ws://127.0.0.1:8001/ws/vr");
+
+    sensorSocket.onopen = () => {
+        console.log("Sensor connected!");
+        setInterval(() => {
+            const hr = Math.floor(70 + Math.random()*40);
+            const gsr = parseFloat(Math.random().toFixed(2));
+            sensorSocket.send(JSON.stringify({ heart_rate: hr, gsr: gsr }));
+        }, 2000);
+    };
+
+    sensorSocket.onmessage = (msg) => {
+        const data = JSON.parse(msg.data);
+        if(data.stress_level !== undefined) {
+            const stress = data.stress_level;
+            const hr = data.heart_rate || 0;
+            const gsr = data.gsr || 0;
+
+            labels.push("");
+            stressData.push(stress);
+            if(stressData.length > 20) { stressData.shift(); labels.shift(); }
+            stressChart.update();
+
+            if(vrSocket.readyState === WebSocket.OPEN)
+                vrSocket.send(JSON.stringify({ stress_level: stress }));
+
+            logSensorData(hr, gsr, stress, intensityData[intensityData.length-1] || 0);
+        }
+    };
+
+    vrSocket.onopen = () => console.log("VR connected!");
+    vrSocket.onmessage = (msg) => {
+        const data = JSON.parse(msg.data);
+        if(data.new_intensity !== undefined) {
+            const intensity = data.new_intensity;
+            intensityData.push(intensity);
+            if(intensityData.length > 20) intensityData.shift();
+            intensityChart.update();
+            updateVRScene(intensity);
+        }
+    };
+}
+
+document.getElementById("connectBtn").onclick = connectSockets;
+</script>
+
 </body>
 </html>
