@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Stress Sensor & VR Dashboard</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #081a34;
+            margin: 0;
+            height: 100vh;
+            display: flex;
+        }
+
+        .left-panel, .right-panel {
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
+        }
+
+        .left-panel {
+            background-color: #25284b;
+            border-right: 1px solid #e5cece;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .right-panel {
+            background-color: #4268b1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        h1 {
+            color: #0c0a17;
+            margin-bottom: 20px;
+        }
+
+        button {
+            background-color: #1a222b;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-bottom: 20px;
+            transition:background 0.3s;
+        }
+
+        button:hover {
+            background-color: #1b2024;
+        }
+
+        .card {
+            background: rgb(132, 136, 158);
+            border-radius: 10px;
+            padding: 20px 30px;
+            margin-bottom: 15px;
+            width: 80%;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .label {
+            color: #000000;
+            margin-bottom: 8px;
+        }
+
+        .value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #000000;
+        }
+
+        /* VR Scene placeholder */
+        #vrScene {
+            width: 150px;
+            height: 150px;
+            background-color: rgb(207, 141, 141);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            font-weight: bold;
+            font-size: 20px;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <div class="left-panel">
+        <h1>Stress Sensor</h1>
+        <button id="connectBtn">CONNECT TO BACKEND</button>
+
+        <div class="card">
+            <div class="label">Heart Rate</div>
+            <div class="value" id="heartRate">--</div>
+        </div>
+
+        <div class="card">
+            <div class="label">Stress Level</div>
+            <div class="value" id="stressLevel">--</div>
+        </div>
+    </div>
+
+    <div class="right-panel">
+        <h1>VR Scene / Therapist View</h1>
+        <div id="vrScene">0%</div>
+
+        <div class="card">
+            <div class="label">VR Intensity</div>
+            <div class="value" id="vrIntensity">--</div>
+        </div>
+    </div>
+
+    <script src="frontend.js"></script>
+</body>
+</html>
