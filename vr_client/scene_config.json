@@ -1,0 +1,7 @@
+{
+    "scene_name": "Heights Exposure",
+    "max_intensity": 1.0,
+    "min_intensity": 0.1,
+    "assets": ["tower.png", "elevator.mp3", "wind.wav"]
+    
+}

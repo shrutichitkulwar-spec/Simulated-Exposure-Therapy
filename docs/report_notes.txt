@@ -1,0 +1,7 @@
+This project demonstrates a basic implementation of Simulated Exposure Therapy.
+
+Includes:
+- Backend (FastAPI)
+- AI/Stress algorithm modules
+- Sensor simulator
+- VR client simulation

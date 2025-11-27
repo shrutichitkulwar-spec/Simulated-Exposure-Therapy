@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Simulated Exposure Therapy - VR Dashboard</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial;
+            background: #10141b;
+            color: white;
+        }
+
+        header {
+            padding: 15px;
+            background: #0a84ff;
+            font-size: 24px;
+            text-align: center;
+            font-weight: bold;
+            color: #fff;
+        }
+
+        #layout {
+            display: flex;
+            height: calc(100vh - 70px);
+        }
+
+        /* LEFT: VR AREA */
+        #vrArea {
+            flex: 1.3;
+            border-right: 2px solid #2a2f38;
+            position: relative;
+        }
+
+        /* RIGHT: CHART + LOGS */
+        #dashboard {
+            flex: 1;
+            padding: 20px;
+            background: #1c1f26;
+            overflow-y: auto;
+        }
+
+        .card {
+            background: #2a2f38;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+
+        button {
+            width: 100%;
+            background: #0a84ff;
+            color: white;
+            padding: 12px;
+            border: none;
+            font-size: 18px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-bottom: 15px;
+        }
+
+        #log {
+            height: 200px;
+            overflow-y: auto;
+            background: #111419;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+
+<header>Simulated Exposure Therapy — VR + Real-Time Dashboard</header>
+
+<div id="layout">
+
+    <!-- LEFT SIDE — VR SCENE -->
+    <div id="vrArea">
+        <a-scene embedded vr-mode-ui="enabled: false">
+
+            <!-- Camera -->
+            <a-entity position="0 1.6 3">
+                <a-camera></a-camera>
+            </a-entity>
+
+            <!-- Floor -->
+            <a-plane rotation="-90 0 0" width="20" height="20" color="#4a4a4a"></a-plane>
+
+            <!-- Exposure Object (changes with intensity) -->
+            <a-sphere id="exposureSphere"
+                      position="0 1.5 -3"
+                      radius="1"
+                      color="#00aaff">
+            </a-sphere>
+
+            <!-- Ambient Light -->
+            <a-entity light="type: ambient; intensity: 0.7"></a-entity>
+
+            <!-- Directional Light -->
+            <a-entity light="type: directional; intensity: 0.8" position="2 4 2"></a-entity>
+
+        </a-scene>
+    </div>
+
+    <!-- RIGHT SIDE — DASHBOARD -->
+    <div id="dashboard">
+        <button onclick="connectSockets()">CONNECT TO BACKEND</button>
+
+        <div class="card">
+            <h3>Stress Level Chart</h3>
+            <canvas id="stressChart"></canvas>
+        </div>
+
+        <div class="card">
+            <h3>VR Intensity Chart</h3>
+            <canvas id="intensityChart"></canvas>
+        </div>
+
+        <div class="card">
+            <h3>System Log</h3>
+            <div id="log">Waiting for connection...</div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+let sensorSocket;
+let vrSocket;
+
+function log(msg) {
+    const box = document.getElementById("log");
+    box.innerHTML += "<br>" + msg;
+    box.scrollTop = box.scrollHeight;
+}
+
+/* ---------------- CHART SETUP ---------------- */
+let stressData = [], intensityData = [], labels = [];
+
+const stressChart = new Chart(document.getElementById("stressChart"), {
+    type: "line",
+    data: {
+        labels,
+        datasets: [{
+            label: "Stress Level",
+            data: stressData,
+            borderColor: "#0a84ff",
+            borderWidth: 3,
+            tension: 0.4
+        }]
+    },
+    options: { scales: { y: { min: 0, max: 1 } }}
+});
+
+const intensityChart = new Chart(document.getElementById("intensityChart"), {
+    type: "line",
+    data: {
+        labels,
+        datasets: [{
+            label: "VR Intensity",
+            data: intensityData,
+            borderColor: "#ff6b00",
+            borderWidth: 3,
+            tension: 0.4
+        }]
+    },
+    options: { scales: { y: { min: 0, max: 1 } }}
+});
+
+/* ---------------- WEBSOCKET LOGIC ---------------- */
+function connectSockets() {
+    log("Connecting to backend...");
+
+    sensorSocket = new WebSocket("ws://127.0.0.1:8000/ws/sensor");
+    vrSocket = new WebSocket("ws://127.0.0.1:8000/ws/vr");
+
+    /* SENSOR CONNECT */
+    sensorSocket.onopen = () => {
+        log("✓ Sensor connected!");
+
+        setInterval(() => {
+            let fake = {
+                heart_rate: Math.floor(70 + Math.random() * 40),
+                gsr: Math.random().toFixed(2)
+            };
+            sensorSocket.send(JSON.stringify(fake));
+        }, 2000);
+    };
+
+    sensorSocket.onmessage = (msg) => {
+        let data = JSON.parse(msg.data);
+        updateStress(data.stress_level);
+
+        vrSocket.send(JSON.stringify({ stress_level: data.stress_level }));
+    };
+
+    /* VR CONNECT */
+    vrSocket.onopen = () => {
+        log("✓ VR connected!");
+    };
+
+    vrSocket.onmessage = (msg) => {
+        let data = JSON.parse(msg.data);
+        updateIntensity(data.new_intensity);
+        updateVRScene(data.new_intensity);
+    };
+}
+
+/* ----------- UPDATES ------------ */
+function updateStress(value) {
+    labels.push("");
+    stressData.push(value);
+    if (stressData.length > 20) { stressData.shift(); labels.shift(); }
+    stressChart.update();
+}
+
+function updateIntensity(value) {
+    intensityData.push(value);
+    if (intensityData.length > 20) intensityData.shift();
+    intensityChart.update();
+}
+
+/* -------- VR Visualization changes ------- */
+function updateVRScene(intensity) {
+    const sphere = document.getElementById("exposureSphere");
+
+    // Color shifts RED as intensity increases
+    let red = Math.floor(100 + intensity * 155);
+    let blue = Math.floor(255 - intensity * 155);
+
+    sphere.setAttribute("color", `rgb(${red}, 50, ${blue})`);
+
+    // Pulsing size based on intensity
+    sphere.setAttribute("radius", 1 + intensity * 1.5);
+}
+</script>
+
+</body>
+</html>
